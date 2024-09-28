@@ -32,7 +32,7 @@ public class QuestoesDBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int versaoAntiga, int novaVersao) {
-            // Política de upgrade é simplesmente descartar o conteúdo e começar novamente
+
             db.execSQL("DROP TABLE IF EXISTS " + QuestoesDbSchema.QuestoesTbl.NOME);
             onCreate(db);
     }
@@ -56,7 +56,7 @@ public class QuestoesDBHelper extends SQLiteOpenHelper {
 
     public void removeTodasRespostas() {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete("Respostas", null, null); // Deleta todas as entradas na tabela Respostas
+        db.delete("Respostas", null, null);
         db.close();
     }
 }

@@ -124,14 +124,14 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             cursor.moveToFirst();
                             while (!cursor.isAfterLast()) {
-                                // Obtendo os valores das colunas
-                                int id = cursor.getInt(cursor.getColumnIndex("_id")); // id da resposta
+
+                                int id = cursor.getInt(cursor.getColumnIndex("_id")); //
                                 String uuidQuestao = cursor.getString(cursor.getColumnIndex("uuid_questao"));
                                 int respostaCorreta = cursor.getInt(cursor.getColumnIndex("resposta_correta"));
                                 String respostaOferecida = cursor.getString(cursor.getColumnIndex("resposta_oferecida"));
                                 int colou = cursor.getInt(cursor.getColumnIndex("colou"));
 
-                                // Criando uma string para exibir
+
                                 String respostaTexto = "ID: " + id +
                                         ", UUID: " + uuidQuestao +
                                         ", Correta: " + respostaCorreta +
@@ -161,12 +161,12 @@ public class MainActivity extends AppCompatActivity {
           Acesso ao SQLite
         */
                 if (mQuestoesDb != null) {
-                    mQuestoesDb.deletaTodasAsRespostas(); // Chama o método para deletar todas as respostas
+                    mQuestoesDb.deletaTodasAsRespostas();
 
                     if (mTextViewQuestoesArmazenadas == null) {
                         mTextViewQuestoesArmazenadas = (TextView) findViewById(R.id.texto_questoes_a_apresentar);
                     }
-                    mTextViewQuestoesArmazenadas.setText(""); // Limpa o texto da TextView
+                    mTextViewQuestoesArmazenadas.setText("");
                 }
             }
         });
@@ -179,20 +179,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void verificaResposta(boolean respostaPressionada) {
-        // Obtenha o UUID da questão atual
-        String uuidQuestao = mBancoDeQuestoes[mIndiceAtual].getId().toString(); // Ajuste isso de acordo com seu método de obtenção do UUID
 
-        // Verifique se a resposta pressionada está correta
+        String uuidQuestao = mBancoDeQuestoes[mIndiceAtual].getId().toString();
+
         boolean respostaCorreta = mBancoDeQuestoes[mIndiceAtual].isRespostaCorreta();
         int idMensagemResposta = 0;
 
-        // Determine a resposta oferecida (1 para verdadeiro, 0 para falso)
         int respostaOferecida = respostaPressionada ? 1 : 0;
 
-        // Verifique se o usuário colou (0 ou 1)
-        int colou = mEhColador ? 1 : 0; // Ou implemente sua lógica de verificação de cola
 
-        // Insira a resposta no banco de dados
+        int colou = mEhColador ? 1 : 0;
+
+
         QuestoesDBHelper dbHelper = new QuestoesDBHelper(this);
         dbHelper.inserirResposta(uuidQuestao, respostaCorreta ? 1 : 0, String.valueOf(respostaOferecida), colou);
 

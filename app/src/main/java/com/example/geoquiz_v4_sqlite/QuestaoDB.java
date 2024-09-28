@@ -51,7 +51,7 @@ public class QuestaoDB {
     }
 
     public Cursor queryRespostas(String selection, String[] selectionArgs) {
-        return mDbHelper.queryRespostas(selection, selectionArgs); // Chame o método do helper
+        return mDbHelper.queryRespostas(selection, selectionArgs);
     }
 
     public void deletaTodasAsRespostas(){
