@@ -10,11 +10,13 @@ public class QuestaoDB {
     private Context mContext;
     private static Context mStaticContext;
     private SQLiteDatabase mDatabase;
+    private QuestoesDBHelper mDbHelper;
 
     public QuestaoDB(Context contexto){
         mContext = contexto.getApplicationContext();
         mStaticContext = mContext;
         mDatabase = new QuestoesDBHelper(mContext).getWritableDatabase();
+        mDbHelper = new QuestoesDBHelper(mContext);
     }
     private static ContentValues getValoresConteudo(Questao q){
         ContentValues valores = new ContentValues();
@@ -47,6 +49,15 @@ public class QuestaoDB {
                 );
                 return cursor;
     }
+
+    public Cursor queryRespostas(String selection, String[] selectionArgs) {
+        return mDbHelper.queryRespostas(selection, selectionArgs); // Chame o método do helper
+    }
+
+    public void deletaTodasAsRespostas(){
+         mDbHelper.removeTodasRespostas();
+    }
+
     void removeBanco(){
         int delete;
         delete = mDatabase.delete(

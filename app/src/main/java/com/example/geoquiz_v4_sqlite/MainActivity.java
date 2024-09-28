@@ -24,7 +24,6 @@ public class MainActivity extends AppCompatActivity {
     private Button mBotaoVerdadeiro;
     private Button mBotaoFalso;
     private Button mBotaoProximo;
-    private Button mBotaoCadastra;
     private Button mBotaoMostra;
     private Button mBotaoDeleta;
 
@@ -52,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle instanciaSalva) {
         super.onCreate(instanciaSalva);
         setContentView(R.layout.activity_main);
+        mQuestoesDb = new QuestaoDB(this);
         //Log.d(TAG, "onCreate()");
         if (instanciaSalva != null) {
             mIndiceAtual = instanciaSalva.getInt(CHAVE_INDICE, 0);
@@ -99,74 +99,74 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mBotaoCadastra = (Button) findViewById(R.id.botao_cadastra);
-        mBotaoCadastra.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                /*
-                  Acesso ao SQLite
-                */
-                if (mQuestoesDb == null) {
-                    mQuestoesDb = new QuestaoDB(getBaseContext());
-                }
-                int indice = 0;
-                mQuestoesDb.addQuestao(mBancoDeQuestoes[indice++]);
-                mQuestoesDb.addQuestao(mBancoDeQuestoes[indice++]);
-            }
-        });
-
-        //Cursor cur = mQuestoesDb.queryQuestao ("_id = ?", val);////(null, null);
-        //String [] val = {"1"};
         mBotaoMostra = (Button) findViewById(R.id.botao_mostra_questoes);
         mBotaoMostra.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                /*
-                  Acesso ao SQLite
-                */
+
+
                 if (mQuestoesDb == null) return;
                 if (mTextViewQuestoesArmazenadas == null) {
                     mTextViewQuestoesArmazenadas = (TextView) findViewById(R.id.texto_questoes_a_apresentar);
                 } else {
                     mTextViewQuestoesArmazenadas.setText("");
                 }
-                Cursor cursor = mQuestoesDb.queryQuestao(null, null);
+
+                 //Consultando a tabela Respostas
+                 Cursor cursor = mQuestoesDb.queryRespostas(null, null);
+
+
                 if (cursor != null) {
                     if (cursor.getCount() == 0) {
                         mTextViewQuestoesArmazenadas.setText("Nada a apresentar");
-                        Log.i("MSGS", "Nenhum resultado");
-                    }
-                    //Log.i("MSGS", Integer.toString(cursor.getCount()));
-                    //Log.i("MSGS", "cursor não nulo!");
-                    try {
-                        cursor.moveToFirst();
-                        while (!cursor.isAfterLast()) {
-                            String texto = cursor.getString(cursor.getColumnIndex(QuestoesDbSchema.QuestoesTbl.Cols.TEXTO_QUESTAO));
-                            Log.i("MSGS", texto);
 
-                            mTextViewQuestoesArmazenadas.append(texto + "\n");
-                            cursor.moveToNext();
+                    } else {
+                        try {
+                            cursor.moveToFirst();
+                            while (!cursor.isAfterLast()) {
+                                // Obtendo os valores das colunas
+                                int id = cursor.getInt(cursor.getColumnIndex("_id")); // id da resposta
+                                String uuidQuestao = cursor.getString(cursor.getColumnIndex("uuid_questao"));
+                                int respostaCorreta = cursor.getInt(cursor.getColumnIndex("resposta_correta"));
+                                String respostaOferecida = cursor.getString(cursor.getColumnIndex("resposta_oferecida"));
+                                int colou = cursor.getInt(cursor.getColumnIndex("colou"));
+
+                                // Criando uma string para exibir
+                                String respostaTexto = "ID: " + id +
+                                        ", UUID: " + uuidQuestao +
+                                        ", Correta: " + respostaCorreta +
+                                        ", Oferecida: " + respostaOferecida +
+                                        ", Colou: " + colou;
+
+                                Log.i("MSGS", respostaTexto);
+                                mTextViewQuestoesArmazenadas.append(respostaTexto + "\n");
+                                cursor.moveToNext();
+                            }
+                        } finally {
+                            cursor.close();
                         }
-                    } finally {
-                        cursor.close();
                     }
-                } else
+                } else {
                     Log.i("MSGS", "cursor nulo!");
+                }
             }
         });
+
+
         mBotaoDeleta = (Button) findViewById(R.id.botao_deleta);
         mBotaoDeleta.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                /*
-                  Acesso ao SQLite
-                */
+        /*
+          Acesso ao SQLite
+        */
                 if (mQuestoesDb != null) {
-                    mQuestoesDb.removeBanco();
+                    mQuestoesDb.deletaTodasAsRespostas(); // Chama o método para deletar todas as respostas
+
                     if (mTextViewQuestoesArmazenadas == null) {
                         mTextViewQuestoesArmazenadas = (TextView) findViewById(R.id.texto_questoes_a_apresentar);
                     }
-                    mTextViewQuestoesArmazenadas.setText("");
+                    mTextViewQuestoesArmazenadas.setText(""); // Limpa o texto da TextView
                 }
             }
         });
@@ -179,17 +179,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void verificaResposta(boolean respostaPressionada) {
+        // Obtenha o UUID da questão atual
+        String uuidQuestao = mBancoDeQuestoes[mIndiceAtual].getId().toString(); // Ajuste isso de acordo com seu método de obtenção do UUID
+
+        // Verifique se a resposta pressionada está correta
         boolean respostaCorreta = mBancoDeQuestoes[mIndiceAtual].isRespostaCorreta();
         int idMensagemResposta = 0;
 
+        // Determine a resposta oferecida (1 para verdadeiro, 0 para falso)
+        int respostaOferecida = respostaPressionada ? 1 : 0;
+
+        // Verifique se o usuário colou (0 ou 1)
+        int colou = mEhColador ? 1 : 0; // Ou implemente sua lógica de verificação de cola
+
+        // Insira a resposta no banco de dados
+        QuestoesDBHelper dbHelper = new QuestoesDBHelper(this);
+        dbHelper.inserirResposta(uuidQuestao, respostaCorreta ? 1 : 0, String.valueOf(respostaOferecida), colou);
+
+        // Mensagem de feedback ao usuário
         if (mEhColador) {
             idMensagemResposta = R.string.toast_julgamento;
         } else {
             if (respostaPressionada == respostaCorreta) {
                 idMensagemResposta = R.string.toast_correto;
-            } else
+            } else {
                 idMensagemResposta = R.string.toast_incorreto;
+            }
         }
+
+        // Mostra o toast com a mensagem
         Toast.makeText(this, idMensagemResposta, Toast.LENGTH_SHORT).show();
     }
 
@@ -202,6 +220,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int codigoRequisicao, int codigoResultado, Intent dados) {
+        super.onActivityResult(codigoRequisicao, codigoResultado, dados);
         if (codigoResultado != Activity.RESULT_OK) {
             return;
         }
